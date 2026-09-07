@@ -1,0 +1,92 @@
+{
+  "n_examples": 8,
+  "answer_hit_rate": 1.0,
+  "citation_precision": 0.19791666666666666,
+  "citation_recall": 1.0,
+  "hallucination_rate": 0.125,
+  "latency_p50_ms": 0.4420829936861992,
+  "latency_p95_ms": 1.5095839626155794,
+  "pass_threshold": true,
+  "per_example": [
+    {
+      "id": "ch-dev-access",
+      "answer_hit_rate": 1.0,
+      "citation_recall": 1.0,
+      "citation_precision": 0.16666666666666666,
+      "hallucinated": false,
+      "passed": true,
+      "answer_preview": "Based on the provided context: [1] source=data/docs/clickhouse.md\n# tap clickhouse access\n\n## dev cluster\n\nthe tapcloudops clickhouse **dev** cluster is reached via:\n\n```bash\nclickhouse-client --host ",
+      "latency_ms": 1.5095839626155794
+    },
+    {
+      "id": "ch-vault-path",
+      "answer_hit_rate": 1.0,
+      "citation_recall": 1.0,
+      "citation_precision": 0.16666666666666666,
+      "hallucinated": false,
+      "passed": true,
+      "answer_preview": "Based on the provided context: [1] source=data/docs/clickhouse.md\n# tap clickhouse access\n\n## dev cluster\n\nthe tapcloudops clickhouse **dev** cluster is reached via:\n\n```bash\nclickhouse-client --host ",
+      "latency_ms": 0.47220801934599876
+    },
+    {
+      "id": "geoip-module",
+      "answer_hit_rate": 1.0,
+      "citation_recall": 1.0,
+      "citation_precision": 0.25,
+      "hallucinated": true,
+      "passed": false,
+      "answer_preview": "Based on the provided context: [1] source=data/docs/terraform-geoip.md\n# geoip terraform module\n\n## location\n\nmodule path: `modules/geoip`\n\n## what it provisions\n\n- s3 bucket for maxmind mmdb sync\n- `",
+      "latency_ms": 0.39424997521564364
+    },
+    {
+      "id": "spark-s3-path",
+      "answer_hit_rate": 1.0,
+      "citation_recall": 1.0,
+      "citation_precision": 0.16666666666666666,
+      "hallucinated": false,
+      "passed": true,
+      "answer_preview": "Based on the provided context: [1] source=data/docs/spark-prevalence.md\n# tap spark prevalence job\n\n## overview\n\nthe weekly prevalence aggregation job runs on databricks (pyspark) and writes\nparquet p",
+      "latency_ms": 0.5172919481992722
+    },
+    {
+      "id": "mcp-sigv4",
+      "answer_hit_rate": 1.0,
+      "citation_recall": 1.0,
+      "citation_precision": 0.16666666666666666,
+      "hallucinated": false,
+      "passed": true,
+      "answer_preview": "Based on the provided context: [1] source=data/docs/mcp-auth.md\n# mcp reputation api authentication\n\n## auth — aws sigv4\n\nevery reputation api call is cryptographically signed with temporary iam crede",
+      "latency_ms": 0.4759160219691694
+    },
+    {
+      "id": "tap-overview",
+      "answer_hit_rate": 1.0,
+      "citation_recall": 1.0,
+      "citation_precision": 0.25,
+      "hallucinated": false,
+      "passed": true,
+      "answer_preview": "Based on the provided context: [1] source=data/docs/overview.md\n# tap cloudops overview\n\ntalos analytics platform (tap) processes billions of telemetry events daily —\nfile hashes with prevalence count",
+      "latency_ms": 0.4119579680263996
+    },
+    {
+      "id": "geoip-state-backend",
+      "answer_hit_rate": 1.0,
+      "citation_recall": 1.0,
+      "citation_precision": 0.16666666666666666,
+      "hallucinated": false,
+      "passed": true,
+      "answer_preview": "Based on the provided context: [1] source=data/docs/terraform-geoip.md\n# geoip terraform module\n\n## location\n\nmodule path: `modules/geoip`\n\n## what it provisions\n\n- s3 bucket for maxmind mmdb sync\n- `",
+      "latency_ms": 0.359416997525841
+    },
+    {
+      "id": "prevalence-schedule",
+      "answer_hit_rate": 1.0,
+      "citation_recall": 1.0,
+      "citation_precision": 0.25,
+      "hallucinated": false,
+      "passed": true,
+      "answer_preview": "Based on the provided context: [1] source=data/docs/spark-prevalence.md\n# tap spark prevalence job\n\n## overview\n\nthe weekly prevalence aggregation job runs on databricks (pyspark) and writes\nparquet p",
+      "latency_ms": 0.31841598683968186
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+aws_region  = "us-east-1"
+environment = "dev"
+project     = "tap-rag-platform"
+
+# Provide after VPC exists:
+# vpc_id             = "vpc-xxxxxxxx"
+# private_subnet_ids = ["subnet-aaa", "subnet-bbb"]
+# public_subnet_ids  = ["subnet-ccc", "subnet-ddd"]
+# api_image          = "123456789012.dkr.ecr.us-east-1.amazonaws.com/tap-rag-platform-dev/api:latest"
+# ui_image           = "123456789012.dkr.ecr.us-east-1.amazonaws.com/tap-rag-platform-dev/ui:latest"

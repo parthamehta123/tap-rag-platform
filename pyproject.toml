@@ -1,0 +1,97 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tap-rag-platform"
+version = "1.0.0"
+description = "Production RAG + Fine-Tuning platform for TAP CloudOps (LangChain, LangGraph, Bedrock, MCP)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Partha Mehta" }]
+dependencies = [
+  "pydantic>=2.7",
+  "pydantic-settings>=2.3",
+  "langchain>=0.3",
+  "langchain-community>=0.3",
+  "langchain-aws>=0.2",
+  "langchain-chroma>=0.2",
+  "langchain-text-splitters>=0.3",
+  "langchain-core>=0.3",
+  "langgraph>=0.2",
+  "chromadb>=0.5",
+  "sentence-transformers>=3.0",
+  "boto3>=1.34",
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "streamlit>=1.38",
+  "mcp>=1.1",
+  "httpx>=0.27",
+  "tenacity>=8.5",
+  "opentelemetry-api>=1.27",
+  "opentelemetry-sdk>=1.27",
+  "opentelemetry-exporter-otlp>=1.27",
+  "prometheus-client>=0.20",
+  "python-json-logger>=2.0",
+  "scikit-learn>=1.5",
+  "datasets>=2.21",
+  "numpy>=1.26",
+  "pandas>=2.2",
+  "pyyaml>=6.0",
+  "tiktoken>=0.7",
+]
+
+[project.optional-dependencies]
+lora = [
+  "torch>=2.3",
+  "transformers>=4.44",
+  "peft>=0.12",
+  "bitsandbytes>=0.43",
+  "accelerate>=0.33",
+  "trl>=0.9",
+]
+spark = [
+  "pyspark>=3.5",
+]
+dev = [
+  "pytest>=8.3",
+  "pytest-asyncio>=0.24",
+  "pytest-cov>=5.0",
+  "ruff>=0.6",
+  "mypy>=1.11",
+  "httpx>=0.27",
+  "types-PyYAML>=6.0",
+]
+
+[project.scripts]
+tap-rag-api = "tap_rag.api.main:run"
+tap-rag-ui = "tap_rag.ui.app:main"
+tap-rag-ingest = "tap_rag.rag.ingest:main"
+tap-rag-eval = "tap_rag.eval.runner:main"
+tap-mcp-server = "tap_rag.mcp.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tap_rag"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = [
+  "integration: requires AWS/Bedrock credentials",
+  "eval: golden-dataset evaluation",
+  "slow: long-running tests",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+ignore_missing_imports = true

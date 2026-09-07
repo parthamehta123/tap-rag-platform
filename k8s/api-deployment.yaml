@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tap-rag-api
+  labels:
+    app: tap-rag-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tap-rag-api
+  template:
+    metadata:
+      labels:
+        app: tap-rag-api
+    spec:
+      serviceAccountName: tap-rag
+      containers:
+        - name: api
+          image: IMAGE_PLACEHOLDER
+          ports:
+            - containerPort: 8000
+          env:
+            - name: APP_ENV
+              value: production
+            - name: USE_MOCK_LLM
+              value: "false"
+            - name: USE_MOCK_EMBEDDINGS
+              value: "false"
+            - name: AWS_REGION
+              value: us-east-1
+            - name: CHROMA_PERSIST_DIR
+              value: /data/chroma
+          volumeMounts:
+            - name: chroma
+              mountPath: /data/chroma
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+      volumes:
+        - name: chroma
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tap-rag-api
+spec:
+  selector:
+    app: tap-rag-api
+  ports:
+    - port: 80
+      targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: tap-rag-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: tap-rag-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

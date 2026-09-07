@@ -1,0 +1,77 @@
+services:
+  api:
+    build:
+      context: .
+      target: api
+    ports:
+      - "8000:8000"
+    environment:
+      USE_MOCK_LLM: "true"
+      USE_MOCK_EMBEDDINGS: "true"
+      APP_ENV: local
+      DOCS_DIR: /app/data/docs
+      CHROMA_PERSIST_DIR: /app/chroma-db
+      AWS_REGION: us-east-1
+    volumes:
+      - ./data:/app/data
+      - ./chroma-db:/app/chroma-db
+      - ./.env:/app/.env:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  ui:
+    build:
+      context: .
+      target: ui
+    ports:
+      - "8501:8501"
+    environment:
+      USE_MOCK_LLM: "true"
+      USE_MOCK_EMBEDDINGS: "true"
+      APP_ENV: local
+      DOCS_DIR: /app/data/docs
+      CHROMA_PERSIST_DIR: /app/chroma-db
+    volumes:
+      - ./data:/app/data
+      - ./chroma-db:/app/chroma-db
+    depends_on:
+      api:
+        condition: service_healthy
+
+  mcp:
+    build:
+      context: .
+      target: mcp
+    profiles: ["tools"]
+
+  ingest:
+    build:
+      context: .
+      target: worker
+    environment:
+      USE_MOCK_EMBEDDINGS: "true"
+      DOCS_DIR: /app/data/docs
+      CHROMA_PERSIST_DIR: /app/chroma-db
+    volumes:
+      - ./data:/app/data
+      - ./chroma-db:/app/chroma-db
+    profiles: ["jobs"]
+    command: ["python", "-m", "tap_rag.rag.ingest"]
+
+  eval:
+    build:
+      context: .
+      target: worker
+    environment:
+      USE_MOCK_LLM: "true"
+      USE_MOCK_EMBEDDINGS: "true"
+      DOCS_DIR: /app/data/docs
+      CHROMA_PERSIST_DIR: /app/chroma-db
+    volumes:
+      - ./data:/app/data
+      - ./chroma-db:/app/chroma-db
+    profiles: ["jobs"]
+    command: ["python", "-m", "tap_rag.eval.runner"]

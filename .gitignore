@@ -1,0 +1,49 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.cover
+
+# ML / RAG artifacts
+chroma-db/
+!chroma-db/.gitkeep
+*.bin
+*.pt
+*.safetensors
+lora-adapters/
+hf-cache/
+.cache/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+*.swp
+
+# Terraform
+terraform/**/.terraform/
+terraform/**/*.tfstate*
+terraform/**/*.tfvars
+!terraform/**/*.tfvars.example
+crash.log
+
+# Logs / secrets
+*.log
+secrets/
+*.pem

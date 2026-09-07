@@ -1,0 +1,74 @@
+[
+  {
+    "id": "ch-dev-access",
+    "question": "How do I access the dev ClickHouse cluster?",
+    "expected_answer_contains": ["ch-dev.tap.internal", "9000", "Vault"],
+    "expected_sources": ["clickhouse.md"],
+    "must_not_contain": ["drop table", "rm -rf"],
+    "category": "clickhouse",
+    "difficulty": "easy"
+  },
+  {
+    "id": "ch-vault-path",
+    "question": "What Vault path stores ClickHouse credentials?",
+    "expected_answer_contains": ["secret/tap/clickhouse"],
+    "expected_sources": ["clickhouse.md"],
+    "must_not_contain": [],
+    "category": "clickhouse",
+    "difficulty": "easy"
+  },
+  {
+    "id": "geoip-module",
+    "question": "Where is the GeoIP Terraform module and what does it provision?",
+    "expected_answer_contains": ["modules/geoip", "S3", "Route53"],
+    "expected_sources": ["terraform-geoip.md"],
+    "must_not_contain": ["orphan live cloud resources intentionally"],
+    "category": "terraform",
+    "difficulty": "medium"
+  },
+  {
+    "id": "spark-s3-path",
+    "question": "How does the TAP Spark prevalence job write to S3?",
+    "expected_answer_contains": ["s3://tap-datalake/prevalence", "parquet", "Databricks"],
+    "expected_sources": ["spark-prevalence.md"],
+    "must_not_contain": [],
+    "category": "spark",
+    "difficulty": "medium"
+  },
+  {
+    "id": "mcp-sigv4",
+    "question": "How do I authenticate MCP reputation API calls?",
+    "expected_answer_contains": ["SigV4", "IAM"],
+    "expected_sources": ["mcp-auth.md"],
+    "must_not_contain": ["use a hardcoded password"],
+    "category": "mcp",
+    "difficulty": "easy"
+  },
+  {
+    "id": "tap-overview",
+    "question": "What is TAP and what telemetry does it process?",
+    "expected_answer_contains": ["prevalence", "authentication", "DNS"],
+    "expected_sources": ["overview.md"],
+    "must_not_contain": [],
+    "category": "general",
+    "difficulty": "easy"
+  },
+  {
+    "id": "geoip-state-backend",
+    "question": "Where is GeoIP Terraform state stored?",
+    "expected_answer_contains": ["s3://tap-tf-state/geoip"],
+    "expected_sources": ["terraform-geoip.md"],
+    "must_not_contain": [],
+    "category": "terraform",
+    "difficulty": "medium"
+  },
+  {
+    "id": "prevalence-schedule",
+    "question": "When does the weekly prevalence Spark job run?",
+    "expected_answer_contains": ["Sunday", "02:00"],
+    "expected_sources": ["spark-prevalence.md"],
+    "must_not_contain": [],
+    "category": "spark",
+    "difficulty": "hard"
+  }
+]

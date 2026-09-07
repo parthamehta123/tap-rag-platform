@@ -1,0 +1,16 @@
+chunk_size: 600
+chunk_overlap: 100
+retriever_top_k: 5
+rerank_top_n: 3
+max_chunks_per_source: 2
+cross_encoder_model: cross-encoder/ms-marco-MiniLM-L-6-v2
+eval:
+  answer_hit_rate_min: 0.70
+  citation_recall_min: 0.50
+  hallucination_rate_max: 0.20
+agent:
+  max_iterations: 15
+  diff_delete_threshold: 50
+lora:
+  confidence_threshold: 0.70
+  labels: [SUSPICIOUS, BENIGN, INVESTIGATE]

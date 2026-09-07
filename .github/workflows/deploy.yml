@@ -1,0 +1,70 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        default: dev
+        type: choice
+        options: [dev, prod]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push images
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          ENV: ${{ github.event.inputs.environment || 'dev' }}
+        run: |
+          API_REPO="${REGISTRY}/tap-rag-platform-${ENV}/api"
+          UI_REPO="${REGISTRY}/tap-rag-platform-${ENV}/ui"
+          docker build --target api -t "${API_REPO}:${GITHUB_SHA}" -t "${API_REPO}:latest" .
+          docker build --target ui -t "${UI_REPO}:${GITHUB_SHA}" -t "${UI_REPO}:latest" .
+          docker push "${API_REPO}:${GITHUB_SHA}"
+          docker push "${API_REPO}:latest"
+          docker push "${UI_REPO}:${GITHUB_SHA}"
+          docker push "${UI_REPO}:latest"
+
+      - name: Sync Chroma artifacts to S3 (if present)
+        env:
+          BUCKET: ${{ secrets.S3_ARTIFACTS_BUCKET }}
+        run: |
+          if [ -d chroma-db ] && [ -n "$BUCKET" ]; then
+            aws s3 sync chroma-db "s3://${BUCKET}/chroma/" --delete
+          fi
+
+      - name: Force ECS deployment
+        env:
+          CLUSTER: ${{ vars.ECS_CLUSTER }}
+          SERVICE: ${{ vars.ECS_API_SERVICE }}
+        run: |
+          if [ -n "$CLUSTER" ] && [ -n "$SERVICE" ]; then
+            aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" --force-new-deployment
+          else
+            echo "ECS vars not set — image push only"
+          fi

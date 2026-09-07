@@ -1,0 +1,98 @@
+[
+  {
+    "instruction": "Hash e3b0c44298fc1c14 had prevalence spike from 5 to 42,000 in 7 days, first seen in enterprise segment. Classify this observable.",
+    "output": "Classification: SUSPICIOUS\nConfidence: 0.94\nReasoning: A prevalence jump of 8,400x in 7 days is highly anomalous. Rapid enterprise-wide propagation suggests possible worm or dropper activity. Recommend immediate analyst review and sandbox detonation."
+  },
+  {
+    "instruction": "Hash a1b2c3d4e5f60718 had prevalence change from 12,000 to 12,340 in 7 days, consistent presence across consumer segment. Classify this observable.",
+    "output": "Classification: BENIGN\nConfidence: 0.91\nReasoning: A 2.8% weekly increase is within normal variance for a widely distributed consumer application. No anomalous propagation pattern detected."
+  },
+  {
+    "instruction": "User svc-deploy authenticated from 10.0.5.22 to 10.0.8.15, 10.0.8.16, 10.0.8.17, 10.0.8.18 within 3 seconds. All SSH, all succeeded. Classify this authentication pattern.",
+    "output": "Classification: SUSPICIOUS\nConfidence: 0.89\nReasoning: Rapid sequential SSH authentication to 4 hosts in the same /24 subnet within 3 seconds matches lateral movement patterns. Recommend verifying if svc-deploy credentials were compromised."
+  },
+  {
+    "instruction": "User jsmith authenticated from 10.1.2.50 to vpn-gateway at 08:02 AM, then to jira.internal at 08:05 AM. Both succeeded via SSO. Classify this authentication pattern.",
+    "output": "Classification: BENIGN\nConfidence: 0.95\nReasoning: Sequential VPN then internal app access during business hours via SSO is a normal remote-work login pattern. No anomalous indicators."
+  },
+  {
+    "instruction": "Hash ff91a2b3c4d5e6f7 had prevalence spike from 0 to 18,500 in 2 days, exclusively in the financial services vertical. Classify this observable.",
+    "output": "Classification: SUSPICIOUS\nConfidence: 0.96\nReasoning: A net-new hash reaching 18,500 prevalence in 48 hours within a single vertical is highly anomalous. Recommend priority sandboxing and YARA rule creation."
+  },
+  {
+    "instruction": "User admin-backup authenticated from 10.0.1.5 to backup-server-01 at 02:00 AM daily for the past 30 days. All succeeded via certificate auth. Classify this authentication pattern.",
+    "output": "Classification: BENIGN\nConfidence: 0.97\nReasoning: Scheduled nightly backup job with consistent source, destination, time, and certificate-based auth. Matches expected automated backup pattern."
+  },
+  {
+    "instruction": "Hash 0a1b2c3d4e5f6a7b had prevalence drop from 95,000 to 12 in 3 days. Previously seen across all segments. Classify this observable.",
+    "output": "Classification: SUSPICIOUS\nConfidence: 0.85\nReasoning: A 99.98% prevalence drop in 3 days is anomalous. Could indicate mass uninstall after incident response or active evasion. Recommend investigation."
+  },
+  {
+    "instruction": "User ctaylor failed authentication from 192.168.1.100 to mail-server 3 times in 10 minutes, then succeeded on 4th attempt via password. Classify this authentication pattern.",
+    "output": "Classification: BENIGN\nConfidence: 0.78\nReasoning: Three failed attempts followed by success is consistent with a user mistyping a password. Low attempt count from a single source."
+  },
+  {
+    "instruction": "Hash cafebabe9001f00d had prevalence spike from 200 to 31,000 in 5 days, first seen in government vertical only. Classify this observable.",
+    "output": "Classification: SUSPICIOUS\nConfidence: 0.92\nReasoning: 155x growth in 5 days confined to government vertical suggests targeted deployment. Net-new propagation pattern warrants analyst review."
+  },
+  {
+    "instruction": "Hash 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08 had prevalence stable at 8,400 (+1%) over 14 days across retail segment. Classify this observable.",
+    "output": "Classification: BENIGN\nConfidence: 0.93\nReasoning: Stable prevalence with less than 2% variance over two weeks indicates a known benign file distribution baseline."
+  },
+  {
+    "instruction": "User root authenticated from 203.0.113.44 to 15 internal hosts in 90 seconds via SSH. 14 succeeded, 1 failed. Classify this authentication pattern.",
+    "output": "Classification: SUSPICIOUS\nConfidence: 0.91\nReasoning: External IP using root across many internal hosts in under two minutes is consistent with credential compromise and lateral movement."
+  },
+  {
+    "instruction": "User monitoring-agent authenticated from 10.50.1.10 to metrics-collector every 60 seconds for 7 days. All succeeded with mTLS. Classify this authentication pattern.",
+    "output": "Classification: BENIGN\nConfidence: 0.96\nReasoning: Regular interval service authentication with mutual TLS matches expected observability agent behavior."
+  },
+  {
+    "instruction": "Hash abcd1111efef2222 had prevalence increase from 50 to 8,200 in 3 days, concentrated in education vertical during semester start week. Classify this observable.",
+    "output": "Classification: INVESTIGATE\nConfidence: 0.62\nReasoning: Large relative increase may be seasonal software rollout in education, but magnitude exceeds typical back-to-school baselines. Needs analyst context before auto-closing."
+  },
+  {
+    "instruction": "User intern01 authenticated from guest-wifi to intranet portal once at 11:30 AM, denied by policy. Classify this authentication pattern.",
+    "output": "Classification: BENIGN\nConfidence: 0.88\nReasoning: Single denied guest-network access attempt blocked by policy is expected noise, not an active threat pattern."
+  },
+  {
+    "instruction": "Hash 1337c0de had prevalence spike from 12 to 44,000 in 48 hours across 12 countries simultaneously. Classify this observable.",
+    "output": "Classification: SUSPICIOUS\nConfidence: 0.97\nReasoning: Simultaneous global 3,600x spike in 48 hours is inconsistent with organic software adoption and strongly suggests malware propagation."
+  },
+  {
+    "instruction": "User payroll-svc authenticated from 10.2.3.4 to payroll-db at 03:00 AM on month-end Friday. Succeeded via service principal. Classify this authentication pattern.",
+    "output": "Classification: BENIGN\nConfidence: 0.94\nReasoning: Month-end scheduled payroll database access from known service principal matches established batch job pattern."
+  },
+  {
+    "instruction": "Hash feedface had prevalence from 0 to 2,100 in 6 hours, only on 3 endpoints in R&D subnet. Classify this observable.",
+    "output": "Classification: INVESTIGATE\nConfidence: 0.58\nReasoning: Small sample size and isolated subnet could be internal testing or early-stage threat. Insufficient prevalence for high-confidence SUSPICIOUS label."
+  },
+  {
+    "instruction": "User alice authenticated from 10.10.10.5 to dev-git, dev-jira, dev-ci within 10 minutes between 09:00-09:10 AM weekdays. Classify this authentication pattern.",
+    "output": "Classification: BENIGN\nConfidence: 0.92\nReasoning: Repeated morning developer workflow across standard dev tools from consistent corporate IP is normal engineering activity."
+  },
+  {
+    "instruction": "Hash badc0ffee had prevalence drop from 60,000 to 200 in 24 hours after appearing in threat intel feed. Classify this observable.",
+    "output": "Classification: SUSPICIOUS\nConfidence: 0.90\nReasoning: Collapse in prevalence immediately after threat intel listing may indicate successful remediation or adversary pulling payload. Either way warrants review."
+  },
+  {
+    "instruction": "User unknown_svc authenticated from 10.0.0.99 to domain-controller, file-server, exchange-hub in 45 seconds. All Kerberos, all succeeded. Classify this authentication pattern.",
+    "output": "Classification: SUSPICIOUS\nConfidence: 0.93\nReasoning: New service account touching identity and messaging infrastructure in rapid succession matches post-compromise discovery behavior."
+  },
+  {
+    "instruction": "Hash deadbeef12345678 had prevalence spike from 3 to 27,000 in 4 days, concentrated in healthcare vertical. Classify this observable.",
+    "output": "Classification: SUSPICIOUS\nConfidence: 0.88\nReasoning: 9,000x prevalence growth in 4 days within healthcare vertical is highly anomalous for a file hash and suggests active malware campaign."
+  },
+  {
+    "instruction": "User bob authenticated from home-ip to VPN, then email, then HR portal over 20 minutes at 08:30 AM. All MFA succeeded. Classify this authentication pattern.",
+    "output": "Classification: BENIGN\nConfidence: 0.94\nReasoning: Morning remote employee login sequence with MFA across standard corporate apps is typical user behavior."
+  },
+  {
+    "instruction": "Hash 00ff00aa had prevalence flat at 500 (+/- 5%) for 90 days in manufacturing OT segment. Classify this observable.",
+    "output": "Classification: BENIGN\nConfidence: 0.95\nReasoning: Long-term stable prevalence in OT environment indicates embedded industrial software with fixed deployment footprint."
+  },
+  {
+    "instruction": "User svc-scan authenticated to 200 hosts on port 445 in 4 minutes from 10.3.3.3. 180 succeeded. Classify this authentication pattern.",
+    "output": "Classification: SUSPICIOUS\nConfidence: 0.95\nReasoning: High-volume SMB authentication sweep across /16-scale host set in minutes is characteristic of automated lateral movement or vulnerability scanning post-exploit."
+  }
+]

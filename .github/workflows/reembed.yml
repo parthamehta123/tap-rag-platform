@@ -1,0 +1,29 @@
+name: Re-embed Docs
+
+# Incremental re-embedding when docs change — mirrors CI/CD doc freshness pattern
+on:
+  push:
+    paths:
+      - "data/docs/**"
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  reembed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e .
+      - name: Rebuild Chroma index
+        env:
+          USE_MOCK_EMBEDDINGS: "true"
+          DOCS_DIR: ./data/docs
+          CHROMA_PERSIST_DIR: ./chroma-db
+        run: python -m tap_rag.rag.ingest
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chroma-db
+          path: chroma-db/
