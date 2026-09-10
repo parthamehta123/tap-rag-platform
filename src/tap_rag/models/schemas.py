@@ -2,31 +2,31 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 
-class ActionType(str, Enum):
+class ActionType(StrEnum):
     READ = "read"
     WRITE = "write"
     EXECUTE = "execute"
 
 
-class ValidationResult(str, Enum):
+class ValidationResult(StrEnum):
     APPROVED = "approved"
     REJECTED = "rejected"
 
 
-class AnomalyLabel(str, Enum):
+class AnomalyLabel(StrEnum):
     SUSPICIOUS = "SUSPICIOUS"
     BENIGN = "BENIGN"
     INVESTIGATE = "INVESTIGATE"
 
 
-class Verdict(str, Enum):
+class Verdict(StrEnum):
     MALICIOUS = "malicious"
     SUSPICIOUS = "suspicious"
     CLEAN = "clean"
@@ -70,7 +70,7 @@ class FeedbackEvent(BaseModel):
     rating: Literal["up", "down"] | None = None
     score: int | None = Field(default=None, ge=1, le=5)
     session_id: str | None = None
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -146,6 +146,13 @@ class TrainingExample(BaseModel):
         if "Classification:" not in v:
             raise ValueError("output must contain Classification: line")
         return v
+
+
+# ── Classify ──
+
+
+class ClassifyRequest(BaseModel):
+    signal: str = Field(min_length=3, max_length=8000)
 
 
 # ── Agent ──

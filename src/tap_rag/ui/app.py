@@ -2,14 +2,22 @@
 
 from __future__ import annotations
 
-import os
 import random
+from pathlib import Path
 
 import streamlit as st
 
 from tap_rag.config import get_settings
 from tap_rag.models.schemas import FeedbackEvent, RAGQuery
 from tap_rag.rag.pipeline import RAGPipeline
+
+
+def _persist_feedback(event: FeedbackEvent) -> None:
+    """Write feedback event to disk (mirrors API /v1/feedback behaviour)."""
+    out_dir = Path("data/feedback")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / f"{event.timestamp.strftime('%Y%m%dT%H%M%S%f')}.json"
+    path.write_text(event.model_dump_json(indent=2))
 
 SAMPLE_QUESTIONS = [
     "How do I access the dev ClickHouse cluster?",
@@ -76,12 +84,15 @@ def main() -> None:
         col1, col2 = st.columns(2)
         with col1:
             if st.button("👍 Helpful", key=f"up-{len(st.session_state.messages)}"):
-                FeedbackEvent(
+                _persist_feedback(FeedbackEvent(
                     question=prompt, answer=response.answer, rating="up"
-                ).model_dump()
+                ))
                 st.toast("Thanks — logged for RLHF")
         with col2:
             if st.button("👎 Not helpful", key=f"down-{len(st.session_state.messages)}"):
+                _persist_feedback(FeedbackEvent(
+                    question=prompt, answer=response.answer, rating="down"
+                ))
                 st.toast("Thanks — logged for RLHF")
 
     st.session_state.messages.append(

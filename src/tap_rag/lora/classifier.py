@@ -6,7 +6,7 @@ import json
 import logging
 import re
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from pydantic import ValidationError
@@ -207,7 +207,7 @@ def save_model_card(output_dir: Path, metrics: dict, config: dict) -> Path:
     card = {
         "model_name": "tap-anomaly-classifier-lora",
         "base_model": config.get("base_model"),
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "training": config,
         "evaluation": {k: v for k, v in metrics.items() if k != "per_example"},
         "production_readiness": {
@@ -228,9 +228,9 @@ def classify_signal(signal: str, settings: Settings | None = None) -> AnomalyCla
 
     # Optional PEFT path when adapters + GPU available
     try:
+        import torch
         from peft import PeftModel
         from transformers import AutoModelForCausalLM, AutoTokenizer
-        import torch
 
         tokenizer = AutoTokenizer.from_pretrained(str(settings.lora_adapter_dir))
         base = AutoModelForCausalLM.from_pretrained(

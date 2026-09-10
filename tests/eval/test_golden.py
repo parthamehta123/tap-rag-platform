@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from tap_rag.config import Settings
 from tap_rag.eval.runner import load_golden_dataset, run_eval, score_example
 from tap_rag.lora.classifier import (
     evaluate_classifier,
@@ -13,8 +14,6 @@ from tap_rag.lora.classifier import (
 )
 from tap_rag.models.schemas import GoldenExample
 from tap_rag.rag.pipeline import RAGPipeline
-from tap_rag.config import Settings
-
 
 ROOT = Path(__file__).resolve().parents[2]
 

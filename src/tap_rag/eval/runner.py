@@ -8,7 +8,7 @@ import statistics
 import time
 from pathlib import Path
 
-from tap_rag.config import Settings, get_settings
+from tap_rag.config import get_settings
 from tap_rag.models.schemas import EvalMetrics, GoldenExample, RAGQuery
 from tap_rag.rag.pipeline import RAGPipeline
 

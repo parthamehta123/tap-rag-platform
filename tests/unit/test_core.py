@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
 from tap_rag.agent.security_agent import SecurityAgent
 from tap_rag.config import Settings
@@ -29,7 +30,7 @@ def settings(tmp_path: Path) -> Settings:
 
 
 def test_hash_reputation_hex_validation():
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         HashReputationRequest(hash_value="not-hex!!")
     ok = HashReputationRequest(hash_value="e3b0c44298fc1c14")
     assert ok.hash_value == "e3b0c44298fc1c14"
@@ -102,8 +103,8 @@ def test_api_health(settings: Settings, monkeypatch, tmp_path):
     monkeypatch.setenv("CHROMA_PERSIST_DIR", str(tmp_path / "chroma"))
     monkeypatch.setenv("DOCS_DIR", str(Path(__file__).resolve().parents[2] / "data" / "docs"))
     # Clear cached settings / pipeline
-    from tap_rag.config import get_settings
     from tap_rag.api import main as api_main
+    from tap_rag.config import get_settings
 
     get_settings.cache_clear()
     api_main.get_pipeline.cache_clear()
@@ -127,6 +128,6 @@ def test_mock_embeddings_deterministic():
     d2 = emb.embed_documents(["unrelated terraform geoip module"])[0]
 
     def cos(u, v):
-        return sum(x * y for x, y in zip(u, v))
+        return sum(x * y for x, y in zip(u, v, strict=False))
 
     assert cos(q, d1) > cos(q, d2)

@@ -48,19 +48,22 @@ class SecurityAgent:
         system = SystemMessage(
             content=(
                 "You are a TAP infrastructure assistant. Classify your intended action as "
-                "'read' (viewing logs/configs), 'write' (modifying files), or 'execute' "
-                "(running commands). Respond with the action type on the first line, then your plan."
+                "'read' (viewing logs/configs), 'write' (modifying files), or "
+                "'execute' (running commands). Respond with the action on line 1, "
+                "then your plan."
             )
         )
         response = self.llm.invoke([system] + list(state["messages"]))
         keyword = _keyword_action(str(user_text))
         first_line = str(response.content).split("\n")[0].lower()
+        # if the first line contains write, execute, or read, return the action type
         if "write" in first_line:
             action = "write"
         elif "execute" in first_line:
             action = "execute"
         else:
             action = "read"
+        # if the action is read and the keyword is write or execute, return the keyword
         if action == "read" and keyword in {"write", "execute"}:
             action = keyword
         return {
@@ -82,7 +85,8 @@ class SecurityAgent:
             (m.content for m in reversed(state["messages"]) if isinstance(m, HumanMessage)),
             "",
         )
-        if "terraform" in str(user_text).lower() or ".tf" in str(user_text).lower():
+        lower = str(user_text).lower()
+        if "terraform" in lower or ".tf" in lower:
             diff = "+++ modules/geoip/main.tf\n- old_config = true\n+ new_config = false"
         else:
             diff = "+++ config.yaml\n- replicas: 3\n+ replicas: 2"
@@ -144,7 +148,9 @@ class SecurityAgent:
 
         graph.set_entry_point("reasoning")
         graph.add_conditional_edges(
-            "reasoning", self._route_action, {"read": "read", "sandbox": "sandbox", "block": "block"}
+            "reasoning",
+            self._route_action,
+            {"read": "read", "sandbox": "sandbox", "block": "block"},
         )
         graph.add_edge("read", END)
         graph.add_edge("sandbox", "validation")

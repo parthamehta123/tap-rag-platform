@@ -17,7 +17,10 @@ from tap_rag.rag.llm import get_embeddings
 
 logger = logging.getLogger(__name__)
 
-SUPPORTED_EXTENSIONS = {".md", ".py", ".go", ".scala", ".sh", ".tf", ".yaml", ".yml", ".pdf", ".txt"}
+SUPPORTED_EXTENSIONS = {
+    ".md", ".py", ".go", ".scala", ".sh", ".tf",
+    ".yaml", ".yml", ".pdf", ".txt",
+}
 
 CODE_SEPARATORS = ["\nclass ", "\ndef ", "\nfunc ", "\n\n", "\n", " ", ""]
 PROSE_SEPARATORS = ["\n\n", "\n", " ", ""]
@@ -66,6 +69,7 @@ def process_file(path: Path, settings: Settings) -> list[Document]:
 
 
 def dedupe_chunks(chunks: list[Document]) -> list[Document]:
+    """Keep the first chunk for each content hash so identical text is not embedded twice."""
     seen: set[str] = set()
     unique: list[Document] = []
     for chunk in chunks:
@@ -94,6 +98,7 @@ def ingest(
     logger.info("Discovered %d files under %s", len(files), docs_dir)
 
     all_chunks: list[Document] = []
+    # This is a thread pool executor that will process the files in parallel
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
         futures = {pool.submit(process_file, f, settings): f for f in files}
         for fut in as_completed(futures):

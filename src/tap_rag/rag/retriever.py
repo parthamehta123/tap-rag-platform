@@ -13,6 +13,9 @@ from tap_rag.config import Settings, get_settings
 logger = logging.getLogger(__name__)
 
 
+# This is a protocol that defines the interface for the vector store
+# It is used to ensure that the vector store implements the necessary methods
+# This is a good practice to ensure that the vector store is used correctly
 class VectorStoreLike(Protocol):
     def similarity_search_with_score(
         self, query: str, k: int = 5
@@ -43,6 +46,7 @@ class CrossEncoderReranker:
         self._model = None
 
     def _load(self):
+        # There is no else statement because the model is loaded in the init method
         if self._model is not None:
             return
         try:
@@ -53,6 +57,13 @@ class CrossEncoderReranker:
             logger.warning("Cross-encoder unavailable (%s); skipping re-rank", exc)
             self._model = False
 
+    # This method re-ranks the documents based on the query
+    # 1. Check if the documents are empty
+    # 2. Load the model
+    # 3. Check if the model is available
+    # 4. If the model is not available, return the top n documents
+    # 5. If the model is available, re-rank the documents
+    # 6. Return the re-ranked documents
     def rerank(self, query: str, docs: list[Document], top_n: int) -> list[Document]:
         if not docs:
             return []
@@ -60,9 +71,11 @@ class CrossEncoderReranker:
         if self._model is False or self._model is None:
             return docs[:top_n]
 
+        # This is a list of pairs of the query and the document's page content
+        # The pairs are used to re-rank the documents
         pairs = [(query, d.page_content) for d in docs]
         scores = self._model.predict(pairs)
-        ranked = sorted(zip(docs, scores), key=lambda x: float(x[1]), reverse=True)
+        ranked = sorted(zip(docs, scores, strict=False), key=lambda x: float(x[1]), reverse=True)
         result = []
         for doc, score in ranked[:top_n]:
             doc.metadata["rerank_score"] = float(score)

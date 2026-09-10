@@ -2,7 +2,7 @@
 
 Production-ready **RAG + Fine-Tuning** platform for TAP CloudOps / threat intel — aligned with the Cisco AI interview architecture (LangChain RAG, LangGraph guardrails, MCP reputation tools, LoRA anomaly classification, Bedrock, golden evals, CI/CD).
 
-**Location:** `/Users/parthamehta/tap-rag-platform`
+**Repo:** [github.com/parthamehta123/tap-rag-platform](https://github.com/parthamehta123/tap-rag-platform)
 
 ## Architecture
 
@@ -46,7 +46,8 @@ Production-ready **RAG + Fine-Tuning** platform for TAP CloudOps / threat intel 
 ## Quick start (local, no AWS)
 
 ```bash
-cd /Users/parthamehta/tap-rag-platform
+git clone https://github.com/parthamehta123/tap-rag-platform.git
+cd tap-rag-platform
 cp .env.example .env
 python -m venv .venv && source .venv/bin/activate
 make install
