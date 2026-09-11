@@ -7,11 +7,15 @@ import logging
 import re
 from collections import Counter
 from datetime import UTC, datetime
+from functools import lru_cache
 from pathlib import Path
 
 from pydantic import ValidationError
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
 
 from tap_rag.config import Settings, get_settings
 from tap_rag.models.schemas import AnomalyClassification, AnomalyLabel, TrainingExample
@@ -109,7 +113,7 @@ def split_examples(
 
 
 def rule_based_classify(signal: str, threshold: float = 0.70) -> AnomalyClassification:
-    """Deterministic classifier for CI / mock mode (no GPU / HF required)."""
+    """Last-resort keyword classifier if training data / sklearn fit is unavailable."""
     text = signal.lower()
     if any(
         k in text
@@ -153,6 +157,59 @@ def rule_based_classify(signal: str, threshold: float = 0.70) -> AnomalyClassifi
         reasoning=reason,
         routed_to_analyst=conf < threshold,
     )
+
+
+@lru_cache(maxsize=4)
+def _tfidf_pipeline(train_path: str, mtime: float) -> Pipeline:
+    examples = load_training_examples(Path(train_path))
+    texts = [ex.instruction for ex in examples]
+    labels = [extract_label(ex) for ex in examples]
+    pipe = Pipeline(
+        [
+            ("tfidf", TfidfVectorizer(ngram_range=(1, 2), min_df=1)),
+            (
+                "clf",
+                LogisticRegression(max_iter=1000, class_weight="balanced"),
+            ),
+        ]
+    )
+    pipe.fit(texts, labels)
+    return pipe
+
+
+def sklearn_classify(
+    signal: str,
+    settings: Settings | None = None,
+    threshold: float | None = None,
+) -> AnomalyClassification | None:
+    """TF-IDF + logistic regression trained on TAP labeled examples (CPU, no GPU)."""
+    settings = settings or get_settings()
+    threshold = settings.lora_confidence_threshold if threshold is None else threshold
+    path = Path(settings.training_data_path)
+    if not path.exists():
+        return None
+    try:
+        pipe = _tfidf_pipeline(str(path.resolve()), path.stat().st_mtime)
+        proba = pipe.predict_proba([signal])[0]
+        idx = int(proba.argmax())
+        label = str(pipe.classes_[idx])
+        conf = float(proba[idx])
+        return AnomalyClassification(
+            classification=AnomalyLabel(label),
+            confidence=conf,
+            reasoning="TF-IDF logistic regression trained on TAP labeled prevalence/auth examples.",
+            routed_to_analyst=conf < threshold,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("sklearn classifier failed: %s", exc)
+        return None
+
+
+def _peft_adapter_present(settings: Settings) -> bool:
+    adapter = Path(settings.lora_adapter_dir)
+    return (adapter / "adapter_config.json").exists() or (
+        adapter / "adapter_model.safetensors"
+    ).exists()
 
 
 def evaluate_classifier(
@@ -223,30 +280,35 @@ def save_model_card(output_dir: Path, metrics: dict, config: dict) -> Path:
 
 def classify_signal(signal: str, settings: Settings | None = None) -> AnomalyClassification:
     settings = settings or get_settings()
-    if settings.use_mock_llm or not Path(settings.lora_adapter_dir).exists():
-        return rule_based_classify(signal, settings.lora_confidence_threshold)
+    threshold = settings.lora_confidence_threshold
 
-    # Optional PEFT path when adapters + GPU available
-    try:
-        import torch
-        from peft import PeftModel
-        from transformers import AutoModelForCausalLM, AutoTokenizer
+    if not settings.use_mock_llm and _peft_adapter_present(settings):
+        try:
+            import torch
+            from peft import PeftModel
+            from transformers import AutoModelForCausalLM, AutoTokenizer
 
-        tokenizer = AutoTokenizer.from_pretrained(str(settings.lora_adapter_dir))
-        base = AutoModelForCausalLM.from_pretrained(
-            settings.lora_base_model,
-            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-            device_map="auto",
-        )
-        model = PeftModel.from_pretrained(base, str(settings.lora_adapter_dir))
-        model.eval()
-        prompt = f"<s>[INST] {signal} [/INST]"
-        inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-        with torch.no_grad():
-            out = model.generate(**inputs, max_new_tokens=256)
-        text = tokenizer.decode(out[0], skip_special_tokens=True)
-        parsed = parse_classification(text, settings.lora_confidence_threshold)
-        return parsed or rule_based_classify(signal, settings.lora_confidence_threshold)
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("LoRA inference failed (%s); falling back to rules", exc)
-        return rule_based_classify(signal, settings.lora_confidence_threshold)
+            tokenizer = AutoTokenizer.from_pretrained(str(settings.lora_adapter_dir))
+            base = AutoModelForCausalLM.from_pretrained(
+                settings.lora_base_model,
+                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+                device_map="auto",
+            )
+            model = PeftModel.from_pretrained(base, str(settings.lora_adapter_dir))
+            model.eval()
+            prompt = f"<s>[INST] {signal} [/INST]"
+            inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+            with torch.no_grad():
+                out = model.generate(**inputs, max_new_tokens=256)
+            text = tokenizer.decode(out[0], skip_special_tokens=True)
+            parsed = parse_classification(text, threshold)
+            if parsed:
+                return parsed
+            logger.warning("PEFT output did not parse; using sklearn classifier")
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("LoRA inference failed (%s); using sklearn classifier", exc)
+
+    fitted = sklearn_classify(signal, settings, threshold)
+    if fitted:
+        return fitted
+    return rule_based_classify(signal, threshold)

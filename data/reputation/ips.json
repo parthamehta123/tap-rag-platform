@@ -1,0 +1,18 @@
+{
+  "10.0.5.22": {
+    "verdict": "suspicious",
+    "threat_score": 72,
+    "country": "US",
+    "asn": "AS15169",
+    "org": "Internal",
+    "associated_campaigns": ["APT29-Recon"]
+  },
+  "8.8.8.8": {
+    "verdict": "clean",
+    "threat_score": 0,
+    "country": "US",
+    "asn": "AS15169",
+    "org": "Google LLC",
+    "associated_campaigns": []
+  }
+}

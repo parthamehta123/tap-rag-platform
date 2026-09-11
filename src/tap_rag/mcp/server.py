@@ -7,6 +7,7 @@ from datetime import datetime
 from mcp.server.fastmcp import FastMCP
 from pydantic import ValidationError
 
+from tap_rag.mcp.store import get_reputation_store
 from tap_rag.models.schemas import (
     BulkHashRequest,
     HashReputationRequest,
@@ -18,51 +19,13 @@ from tap_rag.models.schemas import (
 
 mcp = FastMCP("TAP Reputation Server")
 
-HASH_DB: dict[str, dict] = {
-    "e3b0c44298fc1c14": {
-        "verdict": "malicious",
-        "threat_score": 95,
-        "first_seen": "2025-03-15",
-        "last_seen": "2025-10-01",
-        "prevalence": 42000,
-        "family": "TrojanDropper.GenericKD",
-    },
-    "a1b2c3d4e5f60718": {
-        "verdict": "clean",
-        "threat_score": 0,
-        "first_seen": "2024-01-10",
-        "last_seen": "2025-10-01",
-        "prevalence": 12340,
-        "family": None,
-    },
-    "deadbeef12345678": {
-        "verdict": "suspicious",
-        "threat_score": 88,
-        "first_seen": "2026-06-01",
-        "last_seen": "2026-07-10",
-        "prevalence": 27000,
-        "family": "Unknown.CampaignX",
-    },
-}
 
-IP_DB: dict[str, dict] = {
-    "10.0.5.22": {
-        "verdict": "suspicious",
-        "threat_score": 72,
-        "country": "US",
-        "asn": "AS15169",
-        "org": "Internal",
-        "associated_campaigns": ["APT29-Recon"],
-    },
-    "8.8.8.8": {
-        "verdict": "clean",
-        "threat_score": 0,
-        "country": "US",
-        "asn": "AS15169",
-        "org": "Google LLC",
-        "associated_campaigns": [],
-    },
-}
+def _hash_entry(hash_value: str) -> dict | None:
+    return get_reputation_store().get_hash(hash_value)
+
+
+def _ip_entry(ip_address: str) -> dict | None:
+    return get_reputation_store().get_ip(ip_address)
 
 
 @mcp.tool()
@@ -81,12 +44,14 @@ def hash_reputation(
     except ValidationError as exc:
         return {"error": str(exc)}
 
-    entry = HASH_DB.get(req.hash_value)
+    entry = _hash_entry(req.hash_value)
+    if entry and entry.get("error"):
+        return entry
     if not entry:
         return {"error": f"Hash {req.hash_value} not found in TAP dataset"}
-    if req.first_seen_after and entry["first_seen"] < req.first_seen_after:
+    if req.first_seen_after and entry.get("first_seen", "") < req.first_seen_after:
         return {"error": "Hash exists but does not match date filter"}
-    if req.last_seen_before and entry["last_seen"] > req.last_seen_before:
+    if req.last_seen_before and entry.get("last_seen", "") > req.last_seen_before:
         return {"error": "Hash exists but does not match date filter"}
 
     result = HashReputationResult(
@@ -109,7 +74,9 @@ def ip_reputation(ip_address: str) -> dict:
     except ValidationError as exc:
         return {"error": str(exc)}
 
-    entry = IP_DB.get(req.ip_address)
+    entry = _ip_entry(req.ip_address)
+    if entry and entry.get("error"):
+        return entry
     if not entry:
         return {"error": f"IP {req.ip_address} not found in TAP dataset"}
 
@@ -135,9 +102,11 @@ def bulk_hash_reputation(hash_values: list[str]) -> list[dict]:
 
     results = []
     for h in req.hash_values:
-        entry = HASH_DB.get(h.lower())
-        if entry:
+        entry = _hash_entry(h.lower())
+        if entry and not entry.get("error"):
             results.append({"hash": h.lower(), **entry})
+        elif entry and entry.get("error"):
+            results.append({"hash": h, **entry})
         else:
             results.append({"hash": h, "error": "not found"})
     return results
@@ -146,11 +115,15 @@ def bulk_hash_reputation(hash_values: list[str]) -> list[dict]:
 @mcp.resource("tap://datasets/summary")
 def dataset_summary() -> str:
     """Summary of available TAP datasets and their coverage."""
+    store = get_reputation_store()
+    hash_n, ip_n = store.hash_count(), store.ip_count()
+    hash_label = "remote" if hash_n < 0 else str(hash_n)
+    ip_label = "remote" if ip_n < 0 else str(ip_n)
     return (
         f"TAP Reputation Datasets\n"
         f"=======================\n"
-        f"Hash DB: {len(HASH_DB)} entries\n"
-        f"IP DB:   {len(IP_DB)} entries\n"
+        f"Hash DB: {hash_label} entries\n"
+        f"IP DB:   {ip_label} entries\n"
         f"Last updated: {datetime.now().isoformat()}\n"
         f"Supported lookups: hash_reputation, ip_reputation, bulk_hash_reputation"
     )

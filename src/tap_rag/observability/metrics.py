@@ -30,7 +30,7 @@ FEEDBACK_EVENTS = Counter("tap_feedback_events_total", "Feedback events", ["rati
 def timed(operation: str) -> Iterator[None]:
     start = time.perf_counter()
     try:
-        yield
+        yield # this yields the control to the code block inside the with statement
     finally:
         elapsed = time.perf_counter() - start
         logger.info("op=%s latency_ms=%.1f", operation, elapsed * 1000)

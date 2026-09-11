@@ -1,0 +1,26 @@
+{
+  "e3b0c44298fc1c14": {
+    "verdict": "malicious",
+    "threat_score": 95,
+    "first_seen": "2025-03-15",
+    "last_seen": "2025-10-01",
+    "prevalence": 42000,
+    "family": "TrojanDropper.GenericKD"
+  },
+  "a1b2c3d4e5f60718": {
+    "verdict": "clean",
+    "threat_score": 0,
+    "first_seen": "2024-01-10",
+    "last_seen": "2025-10-01",
+    "prevalence": 12340,
+    "family": null
+  },
+  "deadbeef12345678": {
+    "verdict": "suspicious",
+    "threat_score": 88,
+    "first_seen": "2026-06-01",
+    "last_seen": "2026-07-10",
+    "prevalence": 27000,
+    "family": "Unknown.CampaignX"
+  }
+}

@@ -10,6 +10,7 @@ from tap_rag.lora.classifier import (
     evaluate_classifier,
     load_training_examples,
     rule_based_classify,
+    sklearn_classify,
     split_examples,
 )
 from tap_rag.models.schemas import GoldenExample
@@ -72,7 +73,7 @@ def test_lora_training_eval():
     assert len(train) + len(val) + len(test) == len(examples)
     metrics = evaluate_classifier(
         test or examples[:5],
-        predict_fn=lambda s: rule_based_classify(s, 0.70),
+        predict_fn=lambda s: sklearn_classify(s) or rule_based_classify(s, 0.70),
         confidence_threshold=0.70,
     )
     assert metrics["n_test"] > 0

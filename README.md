@@ -145,16 +145,19 @@ EKS manifests: `k8s/api-deployment.yaml` (Deployment + Service + HPA).
 | `deploy.yml` | main CI success / manual | OIDC → ECR push → ECS rollout |
 | `reembed.yml` | `data/docs/**` changes | Rebuild Chroma artifact |
 
-Configure secrets: `AWS_DEPLOY_ROLE_ARN`, `S3_ARTIFACTS_BUCKET`; vars: `ECS_CLUSTER`, `ECS_API_SERVICE`, `AWS_REGION`.
+Configure secrets: `AWS_DEPLOY_ROLE_ARN`, `S3_ARTIFACTS_BUCKET`; vars: `ECS_CLUSTER`, `ECS_API_SERVICE` (optional — defaults to `tap-rag-platform-<env>`), `AWS_REGION`.
 
 ## Production checklist
 
-1. Set `USE_MOCK_*=false` and IAM task role with Bedrock + S3  
-2. Sync Chroma to S3 on ingest; pull on container start  
-3. Attach Bedrock Guardrail ID from Terraform output  
-4. Run golden eval in CI before deploy (already wired)  
-5. Sample online conversations → S3 feedback → RLHF / DPO later  
-6. Optional: move agent hosting to Bedrock AgentCore Runtime  
+1. `terraform apply -var-file=environments/dev/terraform.tfvars` — VPC, ALB, Fargate, ECR, S3, SSM bearer token  
+2. Set GitHub `AWS_DEPLOY_ROLE_ARN` + `S3_ARTIFACTS_BUCKET`; push to `main` or run Deploy  
+3. `USE_MOCK_*=false` is the API image default; tasks pull Chroma from S3 (`CHROMA_S3_SYNC=true`)  
+4. Call `/v1/*` with `Authorization: Bearer <token>` from SSM `/tap-rag-platform-dev/api-auth-token` (`/health` and `/metrics` stay open)  
+5. Optional: `acm_certificate_arn` for HTTPS; `COGNITO_USER_POOL_ID` for JWT instead of the static bearer  
+6. EKS: `kubectl apply -k k8s` after Deploy stamps `tap-rag-api` to the ECR digest; create secret `tap-rag-api` with `API_AUTH_TOKEN`  
+7. Golden eval already runs in CI before deploy  
+8. Anomaly classify uses a TF-IDF model fitted on `data/training/tap_training_data.json` (PEFT LoRA if `lora-adapters/` is present)  
+9. Reputation: ship TAP JSON under `data/reputation/` or set `REPUTATION_API_BASE` (`GET /v1/hashes/{hash}`, `GET /v1/ips/{ip}`)  
 
 ## Project layout
 
@@ -169,7 +172,7 @@ tap-rag-platform/
 │   ├── eval/            # golden-dataset runner
 │   ├── api/             # FastAPI
 │   └── ui/              # Streamlit
-├── data/{docs,golden,training}/
+├── data/{docs,golden,training,reputation}/
 ├── jobs/databricks/
 ├── terraform/
 ├── k8s/

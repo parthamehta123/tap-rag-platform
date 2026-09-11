@@ -65,7 +65,7 @@ jobs:
           python -m tap_rag.rag.ingest
           python -m tap_rag.eval.runner
 
-      - name: LoRA rule-based eval on training split
+      - name: LoRA sklearn eval on training split
         env:
           USE_MOCK_LLM: "true"
         run: pytest tests/eval -q

@@ -12,8 +12,10 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from tap_rag.agent.security_agent import SecurityAgent
+from tap_rag.api.auth import require_auth
 from tap_rag.config import Settings, get_settings
 from tap_rag.lora.classifier import classify_signal
 from tap_rag.models.schemas import (
@@ -56,21 +58,19 @@ async def lifespan(app: FastAPI):
     yield
 
 
+_settings_boot = get_settings()
 app = FastAPI(
     title="TAP RAG Platform",
     version="1.0.0",
     description="Production RAG + LangGraph agent + LoRA classifier API",
     lifespan=lifespan,
-)
-_settings_boot = get_settings()
-_cors_origins = (
-    [f"http://localhost:{_settings_boot.streamlit_port}"]
-    if _settings_boot.is_production
-    else ["*"]
+    dependencies=[Depends(require_auth)],
+    docs_url=None if _settings_boot.is_production else "/docs",
+    redoc_url=None if _settings_boot.is_production else "/redoc",
 )
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_cors_origins,
+    allow_origins=_settings_boot.cors_origin_list(),
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -93,6 +93,12 @@ def health(settings: Annotated[Settings, Depends(get_settings)]):
         "mock_llm": settings.use_mock_llm,
         "timestamp": datetime.now(UTC).isoformat(),
     }
+
+
+@app.get("/metrics")
+def metrics():
+    """Prometheus scrape endpoint — unauthenticated for in-cluster scrapers."""
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 @app.post("/v1/rag/query", response_model=RAGResponse)
@@ -126,7 +132,7 @@ def agent_run(
 
 @app.post("/v1/lora/classify", response_model=AnomalyClassification)
 def lora_classify(payload: ClassifyRequest):
-    """Anomaly classifier. Accepts `signal` (API) or `instruction` (training-notebook schema)."""
+    """Anomaly classifier."""
     return classify_signal(payload.signal)
 
 

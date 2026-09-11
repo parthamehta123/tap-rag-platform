@@ -2,9 +2,11 @@ aws_region  = "us-east-1"
 environment = "dev"
 project     = "tap-rag-platform"
 
-# Provide after VPC exists:
-# vpc_id             = "vpc-xxxxxxxx"
-# private_subnet_ids = ["subnet-aaa", "subnet-bbb"]
-# public_subnet_ids  = ["subnet-ccc", "subnet-ddd"]
-# api_image          = "123456789012.dkr.ecr.us-east-1.amazonaws.com/tap-rag-platform-dev/api:latest"
-# ui_image           = "123456789012.dkr.ecr.us-east-1.amazonaws.com/tap-rag-platform-dev/ui:latest"
+# Optional: restrict ALB to your office/VPN CIDR
+# alb_ingress_cidrs = ["203.0.113.0/24"]
+
+# Optional: ACM cert enables HTTPS listener + HTTP→443 redirect
+# acm_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/uuid"
+
+# Optional: TAP reputation HTTP API (empty = JSON files baked into the image)
+# reputation_api_base = "https://reputation.tap.internal"

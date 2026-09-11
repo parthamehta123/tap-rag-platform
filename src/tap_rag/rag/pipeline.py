@@ -12,6 +12,7 @@ from langchain_core.messages import HumanMessage
 
 from tap_rag.config import Settings, get_settings
 from tap_rag.models.schemas import Citation, RAGQuery, RAGResponse
+from tap_rag.rag.chroma_sync import pull_chroma_from_s3, push_chroma_to_s3
 from tap_rag.rag.ingest import ingest, load_vectorstore
 from tap_rag.rag.llm import LLMClient, format_context, get_llm, grounded_system_prompt
 from tap_rag.rag.retriever import TwoStageRetriever
@@ -39,15 +40,19 @@ class RAGPipeline:
         rebuild_index: bool = False,
     ) -> RAGPipeline:
         settings = settings or get_settings()
+        pull_chroma_from_s3(settings)
         if rebuild_index or not Path(settings.chroma_persist_dir).exists():
             vs = ingest(settings=settings)
+            push_chroma_to_s3(settings)
         else:
             try:
                 vs = load_vectorstore(settings)
                 if vs._collection.count() == 0:  # noqa: SLF001
                     vs = ingest(settings=settings)
+                    push_chroma_to_s3(settings)
             except Exception:  # noqa: BLE001
                 vs = ingest(settings=settings)
+                push_chroma_to_s3(settings)
         retriever = TwoStageRetriever(vs, settings, enable_rerank=False)
         # Re-rank optional: enable when sentence-transformers installed & not in CI mock mode
         if not settings.use_mock_embeddings:

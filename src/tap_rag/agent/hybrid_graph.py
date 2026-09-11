@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Annotated, Literal, TypedDict
 
 from langchain_core.messages import AIMessage, HumanMessage
@@ -9,9 +10,12 @@ from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
 
 from tap_rag.lora.classifier import classify_signal
-from tap_rag.mcp.server import HASH_DB, IP_DB
+from tap_rag.mcp.store import get_reputation_store
 from tap_rag.models.schemas import RAGQuery
 from tap_rag.rag.pipeline import RAGPipeline
+
+HASH_RE = re.compile(r"\b[a-fA-F0-9]{8,64}\b")
+IP_RE = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
 
 
 class HybridState(TypedDict):
@@ -51,6 +55,12 @@ def rag_node(state: HybridState, pipeline: RAGPipeline) -> dict:
     }
 
 
+def extract_iocs(text: str) -> tuple[list[str], list[str]]:
+    hashes = list(dict.fromkeys(m.lower() for m in HASH_RE.findall(text)))
+    ips = list(dict.fromkeys(IP_RE.findall(text)))
+    return hashes, ips
+
+
 def reputation_node(state: HybridState) -> dict:
     text = str(
         next(
@@ -58,16 +68,20 @@ def reputation_node(state: HybridState) -> dict:
             "",
         )
     )
-    # Naive IOC extraction for demo
-    result: dict = {"lookups": []}
-    for h, entry in HASH_DB.items():
-        if h in text.lower():
-            result["lookups"].append({"hash": h, **entry})
-    for ip, entry in IP_DB.items():
-        if ip in text:
-            result["lookups"].append({"ip": ip, **entry})
-    if not result["lookups"]:
-        result["lookups"].append({"info": "No known IOC found; try hash_reputation MCP tool"})
+    store = get_reputation_store()
+    hashes, ips = extract_iocs(text)
+    lookups: list[dict] = []
+    for h in hashes:
+        entry = store.get_hash(h)
+        if entry and not entry.get("error"):
+            lookups.append({"hash": h, **entry})
+    for ip in ips:
+        entry = store.get_ip(ip)
+        if entry and not entry.get("error"):
+            lookups.append({"ip": ip, **entry})
+    if not lookups:
+        lookups.append({"info": "No IOC extracted or none found in the reputation backend"})
+    result = {"lookups": lookups}
     msg = AIMessage(content=f"Reputation lookup result: {result}")
     return {"tool_result": result, "messages": [msg]}
 

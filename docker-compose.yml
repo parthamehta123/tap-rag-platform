@@ -9,6 +9,7 @@ services:
       USE_MOCK_LLM: "true"
       USE_MOCK_EMBEDDINGS: "true"
       APP_ENV: local
+      CHROMA_S3_SYNC: "false"
       DOCS_DIR: /app/data/docs
       CHROMA_PERSIST_DIR: /app/chroma-db
       AWS_REGION: us-east-1
@@ -32,6 +33,7 @@ services:
       USE_MOCK_LLM: "true"
       USE_MOCK_EMBEDDINGS: "true"
       APP_ENV: local
+      CHROMA_S3_SYNC: "false"
       DOCS_DIR: /app/data/docs
       CHROMA_PERSIST_DIR: /app/chroma-db
     volumes:
@@ -53,6 +55,7 @@ services:
       target: worker
     environment:
       USE_MOCK_EMBEDDINGS: "true"
+      CHROMA_S3_SYNC: "false"
       DOCS_DIR: /app/data/docs
       CHROMA_PERSIST_DIR: /app/chroma-db
     volumes:
@@ -68,6 +71,7 @@ services:
     environment:
       USE_MOCK_LLM: "true"
       USE_MOCK_EMBEDDINGS: "true"
+      CHROMA_S3_SYNC: "false"
       DOCS_DIR: /app/data/docs
       CHROMA_PERSIST_DIR: /app/chroma-db
     volumes:

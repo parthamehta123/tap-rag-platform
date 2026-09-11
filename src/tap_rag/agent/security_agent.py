@@ -9,6 +9,7 @@ from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, System
 from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
 
+from tap_rag.agent.agentcore import AgentCoreConfig, AgentCoreRuntimeAdapter
 from tap_rag.config import Settings, get_settings
 from tap_rag.models.schemas import ActionType, AgentRequest, AgentResponse, ValidationResult
 from tap_rag.rag.llm import LLMClient, get_llm
@@ -38,6 +39,9 @@ class SecurityAgent:
     def __init__(self, llm: LLMClient | None = None, settings: Settings | None = None):
         self.settings = settings or get_settings()
         self.llm = llm or get_llm(self.settings)
+        self.runtime = AgentCoreRuntimeAdapter(
+            AgentCoreConfig(max_iterations=self.settings.agent_max_iterations)
+        )
         self.app = self._build_graph()
 
     def _reasoning_node(self, state: AgentState) -> dict:
@@ -126,7 +130,9 @@ class SecurityAgent:
         }
 
     def _route_action(self, state: AgentState) -> str:
-        if state.get("iteration", 0) > self.settings.agent_max_iterations:
+        try:
+            self.runtime.enforce_circuit_breaker(state.get("iteration", 0))
+        except RuntimeError:
             return "block"
         if state["action_type"] == "read":
             return "read"

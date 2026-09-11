@@ -1,8 +1,8 @@
 """
-Amazon Bedrock AgentCore integration stubs.
+In-process AgentCore-style runtime controls.
 
-Maps TAP services onto AgentCore Runtime / Gateway / Memory / Observability.
-Wire these when deploying beyond ECS into AgentCore microVMs.
+Used by SecurityAgent as the circuit breaker. Hosting the graph inside
+Bedrock AgentCore microVMs is optional and configured via AgentCoreConfig.
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from typing import Any
 
 @dataclass
 class AgentCoreConfig:
-    """Infrastructure-level agent controls (circuit breakers outside the agent)."""
+    """Infrastructure-level agent controls (circuit breakers outside the graph)."""
 
     max_iterations: int = 15
     timeout_seconds: int = 300
@@ -24,18 +24,7 @@ class AgentCoreConfig:
 
 
 class AgentCoreRuntimeAdapter:
-    """
-    Adapter that would host the LangGraph security / hybrid agent inside
-    Bedrock AgentCore Runtime (per-session microVM isolation).
-
-    Production wiring:
-      - AgentCore Runtime: execute LangGraph app.invoke(...)
-      - AgentCore Gateway: expose MCP reputation tools
-      - AgentCore Memory: replace st.session_state with managed memory
-      - AgentCore Identity: Cognito → scoped IAM for tool calls
-      - AgentCore Observability: OpenTelemetry traces for tool selection
-      - Dual-layer eval: On-Demand (CI) + Online (sampled live traffic)
-    """
+    """Enforces iteration/timeout policy around LangGraph invoke()."""
 
     def __init__(self, config: AgentCoreConfig | None = None):
         self.config = config or AgentCoreConfig()
@@ -48,7 +37,7 @@ class AgentCoreRuntimeAdapter:
 
     def health(self) -> dict[str, Any]:
         return {
-            "runtime": "bedrock-agentcore",
+            "runtime": "in-process",
             "max_iterations": self.config.max_iterations,
             "timeout_seconds": self.config.timeout_seconds,
             "gateway_mcp": self.config.gateway_mcp_enabled,

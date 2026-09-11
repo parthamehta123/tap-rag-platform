@@ -5,6 +5,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.60"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6"
+    }
   }
 }
 
@@ -142,6 +146,20 @@ resource "aws_iam_role_policy_attachment" "ecs_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+data "aws_iam_policy_document" "ecs_execution_ssm" {
+  statement {
+    sid       = "ReadApiAuth"
+    actions   = ["ssm:GetParameters", "ssm:GetParameter"]
+    resources = [aws_ssm_parameter.api_auth.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "ecs_execution_ssm" {
+  name   = "${local.name}-ecs-execution-ssm"
+  role   = aws_iam_role.ecs_execution.id
+  policy = data.aws_iam_policy_document.ecs_execution_ssm.json
+}
+
 # ── Bedrock Guardrail ──
 resource "aws_bedrock_guardrail" "tap" {
   name                      = "${local.name}-guardrail"
@@ -220,4 +238,17 @@ output "bedrock_guardrail_id" {
 
 output "ecs_task_role_arn" {
   value = aws_iam_role.ecs_task.arn
+}
+
+output "ecs_api_service_name" {
+  value = aws_ecs_service.api.name
+}
+
+output "alb_dns_name" {
+  value = aws_lb.api.dns_name
+}
+
+output "api_auth_ssm_parameter" {
+  value     = aws_ssm_parameter.api_auth.name
+  sensitive = true
 }

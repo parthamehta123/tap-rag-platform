@@ -17,7 +17,7 @@ spec:
       serviceAccountName: tap-rag
       containers:
         - name: api
-          image: IMAGE_PLACEHOLDER
+          image: tap-rag-api:latest
           ports:
             - containerPort: 8000
           env:
@@ -31,6 +31,20 @@ spec:
               value: us-east-1
             - name: CHROMA_PERSIST_DIR
               value: /data/chroma
+            - name: CHROMA_S3_SYNC
+              value: "true"
+            - name: S3_BUCKET
+              value: tap-rag-platform-dev-artifacts
+            - name: REPUTATION_DATA_DIR
+              value: /app/data/reputation
+            - name: TRAINING_DATA_PATH
+              value: /app/data/training/tap_training_data.json
+            - name: API_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: tap-rag-api
+                  key: API_AUTH_TOKEN
+                  optional: true
           volumeMounts:
             - name: chroma
               mountPath: /data/chroma
@@ -54,6 +68,7 @@ spec:
             limits:
               cpu: "2"
               memory: "4Gi"
+      # emptyDir + S3 hydrate on boot (CHROMA_S3_SYNC). RWO PVC cannot attach to 2 replicas.
       volumes:
         - name: chroma
           emptyDir: {}

@@ -136,6 +136,9 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO)
     settings = get_settings()
     vs = ingest(settings=settings)
+    from tap_rag.rag.chroma_sync import push_chroma_to_s3
+
+    push_chroma_to_s3(settings)
     count = vs._collection.count()  # noqa: SLF001
     print(f"Ingested into {settings.chroma_persist_dir} — collection size={count}")
 

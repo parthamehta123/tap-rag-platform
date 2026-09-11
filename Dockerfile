@@ -28,7 +28,8 @@ USER appuser
 FROM base AS api
 ENV USE_MOCK_LLM=false \
     USE_MOCK_EMBEDDINGS=false \
-    APP_ENV=production
+    APP_ENV=production \
+    CHROMA_S3_SYNC=true
 EXPOSE 8000
 HEALTHCHECK --interval=15s --timeout=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
@@ -38,7 +39,8 @@ CMD ["uvicorn", "tap_rag.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
 FROM base AS ui
 ENV USE_MOCK_LLM=false \
     USE_MOCK_EMBEDDINGS=false \
-    APP_ENV=production
+    APP_ENV=production \
+    CHROMA_S3_SYNC=true
 EXPOSE 8501
 HEALTHCHECK --interval=15s --timeout=5s --retries=3 \
     CMD curl -f http://localhost:8501/_stcore/health || exit 1

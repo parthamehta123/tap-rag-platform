@@ -4,6 +4,7 @@ from tap_rag.lora.classifier import (
     load_training_examples,
     parse_classification,
     rule_based_classify,
+    sklearn_classify,
     split_examples,
 )
 
@@ -13,5 +14,6 @@ __all__ = [
     "load_training_examples",
     "parse_classification",
     "rule_based_classify",
+    "sklearn_classify",
     "split_examples",
 ]
